@@ -39,6 +39,8 @@ private:
 	int m_height;
 	int m_crop_width;
 	int m_crop_height;
+	int m_crop_x;
+	int m_crop_y;
 	int m_stride;
 	int m_exposure_time_us;
 	int m_frame_duration_us;

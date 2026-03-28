@@ -7,7 +7,7 @@ Camera::Camera()
         	throw std::runtime_error("无法打开配置文件 config.json");
     	}
 
-	nlohmann::json root_json = nlohmann::json::parse(config_file);
+	nlohmann::json root_json = nlohmann::json::parse(config_file,nullptr,true);
 
     	if (!root_json.contains("camera")) {
         	throw std::runtime_error("配置文件缺少 camera 节点");
@@ -16,9 +16,11 @@ Camera::Camera()
 
     	m_width                  = camera_json.value("m_width", 640);
         m_height                 = camera_json.value("m_height", 480);
-        m_crop_width             = camera_json.value("m_crop_width", 1920);
-        m_crop_height            = camera_json.value("m_crop_height", 960);
-   	m_exposure_time_us       = camera_json.value("m_exposure_time_us", 1000);
+        m_crop_width             = camera_json.value("m_crop_width", 2560);
+        m_crop_height            = camera_json.value("m_crop_height", 1920);
+	m_crop_x		 = camera_json.value("m_crop_x",16);
+	m_crop_y		 = camera_json.value("m_crop_y",0);
+	m_exposure_time_us       = camera_json.value("m_exposure_time_us", 1000);
     	m_frame_duration_us      = camera_json.value("m_frame_duration_us", 16972);
     	m_has_new_frame          = camera_json.value("m_has_new_frame", false);
     	m_stopped                = camera_json.value("m_stopped", false);
@@ -152,8 +154,8 @@ bool Camera::get_crop()
         else {
                 const libcamera::Rectangle crop_max = *crop_max_opt;
 
-            	int x = crop_max.x + (int(crop_max.width)  - m_width)  / 2;
-            	int y = crop_max.y + (int(crop_max.height) - m_height) / 2;
+            	int x = m_crop_x;
+            	int y = m_crop_y;
 
             	x &= ~1;
             	y &= ~1;

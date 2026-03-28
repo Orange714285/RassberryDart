@@ -1,14 +1,17 @@
 {
 	"camera":{
-		"m_width":640,
-		"m_height":480,
-		"m_crop_width":2560,
-		"m_crop_height":1920,
-		"m_exposure_time_us":100,
+		"m_width":640, 
+		"m_height":480,             
+		"m_crop_width":1280,        
+		"m_crop_height":960,       
+		"m_crop_x":0,              
+		"m_crop_y":0,               
+		"m_exposure_time_us":10000,
 		"m_frame_duration_us":16972,
 		"m_has_new_frame":false,
 		"m_stopped":false,
 		"m_max_queue_size":3,
 		"m_colour_temperature":6100
+		
 	}
 }
