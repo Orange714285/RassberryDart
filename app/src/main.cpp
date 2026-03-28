@@ -13,7 +13,7 @@ static void onSigInt(int signal)
 }
 
 Camera ov5647;
-//Recorder recorder;
+Recorder recorder;
 Detector detector;
 int main()
 {	
@@ -24,11 +24,11 @@ int main()
 		return -1;
 	}
 	
-//	if(!recorder.start("output.mp4",640,480,60))
-//	{
-//		std::cout<<"[ERROR]recorder start failed!"<<std::endl;
-//		return -1;
-//	}
+	if(!recorder.start("output.mp4",640,480,60))
+	{
+		std::cout<<"[ERROR]recorder start failed!"<<std::endl;
+		return -1;
+	}
 	while(g_running.load())
 	{
 		
@@ -50,11 +50,11 @@ int main()
         //          << "| fd = " << frame_data.plane.fd.get()
         //          << "| get_frame_duration_us = "<< get_frame_duration_us
         //          << std::endl;
+	recorder.write_frame(frame);
 
-//        recorder.publish_frame(frame,ov5647.m_latest_frame.sequence);
 	}
 	
-//	recorder.stop();
+	recorder.stop();
 	ov5647.stop();
 	
 	return 0;

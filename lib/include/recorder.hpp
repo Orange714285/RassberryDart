@@ -23,26 +23,12 @@ public:
 
     bool start(const std::string& output_path, int width, int height, int fps);
     void stop();
-
-    void publish_frame(const cv::Mat& frame, uint64_t sequence);
-
 private:
-    void record_loop();
-    bool write_frame(const cv::Mat& frame);
-
-private:
-    FILE* m_pipe = nullptr;
-
+    FILE* m_fp = nullptr;
+public:
     int m_width = 0;
     int m_height = 0;
     int m_fps = 0;
-
-    std::thread m_thread;
-    std::mutex m_mtx;
-    std::condition_variable m_cv;
-
-    AnnotatedFrame m_latest_frame;
-    bool m_has_new_frame = false;
-
-    std::atomic<bool> m_running{false};
+    bool write_frame(const cv::Mat& frame);
 };
+
