@@ -1,16 +1,43 @@
 #include <camera.hpp>
 
 Camera::Camera()
-{
-	m_width = 640;
-	m_height = 480;
-	m_crop_width = 1920;
-	m_crop_height = 960;
-	m_exposure_time_us = 1000;
-	m_frame_duration_us = 16972;
-	m_has_new_frame = false;
-	m_stopped = false;
-        m_max_queue_size = 3;
+{	
+    	std::ifstream config_file("../config/config.json");
+    	if (!config_file.is_open()) {
+        	throw std::runtime_error("无法打开配置文件 config.json");
+    	}
+
+	nlohmann::json root_json = nlohmann::json::parse(config_file);
+
+    	if (!root_json.contains("camera")) {
+        	throw std::runtime_error("配置文件缺少 camera 节点");
+    	}
+    	const nlohmann::json& camera_json = root_json["camera"];
+
+    	m_width                  = camera_json.value("m_width", 640);
+        m_height                 = camera_json.value("m_height", 480);
+        m_crop_width             = camera_json.value("m_crop_width", 1920);
+        m_crop_height            = camera_json.value("m_crop_height", 960);
+   	m_exposure_time_us       = camera_json.value("m_exposure_time_us", 1000);
+    	m_frame_duration_us      = camera_json.value("m_frame_duration_us", 16972);
+    	m_has_new_frame          = camera_json.value("m_has_new_frame", false);
+    	m_stopped                = camera_json.value("m_stopped", false);
+    	m_max_queue_size         = camera_json.value("m_max_queue_size", 3);
+	m_colour_temperature      = camera_json.value("m_colour_temperature",6100);
+
+        std::cout << "\n===== camera config loaded =====" << std::endl;
+        std::cout << std::boolalpha;
+        std::cout << "width:                  " << m_width                  << std::endl;
+        std::cout << "height:                 " << m_height                 << std::endl;
+        std::cout << "crop_width:             " << m_crop_width             << std::endl;
+        std::cout << "crop_height:            " << m_crop_height            << std::endl;
+        std::cout << "exposure_time_us:       " << m_exposure_time_us       << std::endl;
+        std::cout << "frame_duration_us:      " << m_frame_duration_us      << std::endl;
+        std::cout << "has_new_frame:          " << m_has_new_frame          << std::endl;
+        std::cout << "stopped:                " << m_stopped                << std::endl;
+        std::cout << "max_queue_size:         " << m_max_queue_size         << std::endl;
+	std::cout << "colour temperature      " << m_colour_temperature      << std::endl;
+	std::cout << "==================================" << std::endl;
 }
 
 bool Camera::initialize()
@@ -83,8 +110,10 @@ bool Camera::initialize()
 
 		request->controls().set(libcamera::controls::AwbEnable,false);
 		request->controls().set(libcamera::controls::AeEnable,false);
+		request->controls().set(libcamera::controls::ColourTemperature,m_colour_temperature);
     		request->controls().set(libcamera::controls::ExposureTime,m_exposure_time_us);
 		request->controls().set(libcamera::controls::FrameDurationLimits,libcamera::Span<const int64_t,2>({m_frame_duration_us,m_frame_duration_us}));
+		
 		if(get_crop())
 			request->controls().set(libcamera::controls::ScalerCrop,m_center_crop);	
 		const std::unique_ptr<libcamera::FrameBuffer> &buffer = buffers[i];
@@ -161,6 +190,54 @@ void Camera::request_complete(libcamera::Request *request)
 		std::cout<<"Request canceled!"<<std::endl;
 		return;
 	}
+
+	if (m_index == 0 )
+	{
+		const libcamera::ControlList &meta = request->metadata();
+		std::cout << "============ Camera's real parameters: ============="<<std::endl;
+		if (auto gains = meta.get(libcamera::controls::ColourGains))
+    		{
+    		    std::cout << "[INFO] ColourGains: R=" << (*gains)[0]
+    		              << "|B=" << (*gains)[1] <<std::endl;
+    		}
+    		else
+    		{
+    		    std::cout << "ColourGains not available" << std::endl;
+    		}		
+
+    		if (auto ct = meta.get(libcamera::controls::ColourTemperature))
+    		{
+    		    std::cout << "[INFO] ColourTemperature: " << *ct << " K" << std::endl ;
+    		}
+    		else
+    		{
+    		    std::cout << "ColourTemperature not available" << std::endl;
+    		}
+
+    		if (auto exposure_time = meta.get(libcamera::controls::ExposureTime))
+  	        {
+    		    std::cout << "[INFO] ExposureTime:" << *exposure_time <<std::endl;
+    		}
+   		else
+    		{
+		    std::cout << "ExposureTime not available" <<std::endl;
+    		}
+		
+		if (auto crop = meta.get(libcamera::controls::ScalerCrop))
+		{
+		    std::cout << "[INFO ] ScalerCrop: "
+        		      << "x=" << crop->x
+		              << ", y=" << crop->y
+		              << ", w=" << crop->width
+		              << ", h=" << crop->height;
+		}
+		else
+		{
+		    std::cout << "|ScalerCrop not available";
+		}
+
+    		std::cout<<std::endl;
+	}
 	const std::map<const libcamera::Stream *, libcamera::FrameBuffer *> &buffers = request->buffers();	
 	for (auto bufferPair : buffers) 
 	{
@@ -188,22 +265,12 @@ void Camera::request_complete(libcamera::Request *request)
         		m_frame_queue.push_back(m_rgb_frame.clone());
 		}
 
-		m_plane_condition_variable.notify_one();
-
-		//std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << " bytesused: ";
-		//unsigned int nplane = 0;
-		//for (const libcamera::FrameMetadata::Plane &plane : metadata.planes())
-		//{
-    		//	std::cout << plane.bytesused;
-    		//	if (++nplane < metadata.planes().size()) 
-        	//		std::cout << "/";
-		//}
-		//std::cout << std::endl;
-		
+		m_plane_condition_variable.notify_one();	
 	}
 		
 	request -> reuse(libcamera::Request::ReuseBuffers);
 	m_camera->queueRequest(request);
+	m_index ++ ;
 }
 
 cv::Mat Camera::wait_and_get_latest_frame()
@@ -264,9 +331,15 @@ void Camera::stop()
 {
 	m_stopped = 0;
 }
+
+void Camera::print_camera_parameter()
+{
+	
+}
+
 Camera::~Camera()
 {
-	std::cout<<"-------------------OVER------------------"<<std::endl;
+	std::cout<<"------------------CAMERA--OVER------------------"<<std::endl;
 	if (m_camera) 
 	{  
         	m_camera->stop();
@@ -291,4 +364,6 @@ Camera::~Camera()
 	}
 	std::cout<<"Stop camera manager successed!"<<std::endl;
 }
+
+
 

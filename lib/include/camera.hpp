@@ -1,17 +1,19 @@
 #pragma once
 #include <condition_variable>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <signal.h>
+#include <stdexcept>
 #include <sys/mman.h>
 #include <thread>
 
 #include <frame_data.hpp>
-#include <signal.h>
 #include <opencv2/opencv.hpp>
 #include <libcamera/libcamera.h>
-
+#include <nlohmann/json.hpp>
 
 struct MappedPlane
 {
@@ -41,11 +43,13 @@ private:
 	int m_exposure_time_us;
 	int m_frame_duration_us;
 	int m_max_queue_size;
-
+	int m_colour_temperature;
 	libcamera::Rectangle m_center_crop;
         bool get_crop();
+	void print_camera_parameter();
 	
 	//线程相关
+	int m_index = 0;
 	std::mutex m_mtx;
 	std::condition_variable m_plane_condition_variable;
 	
