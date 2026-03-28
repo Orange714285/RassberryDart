@@ -10,6 +10,7 @@ Camera::Camera()
 	m_frame_duration_us = 16972;
 	m_has_new_frame = false;
 	m_stopped = false;
+        m_max_queue_size = 3;
 }
 
 bool Camera::initialize()
@@ -165,21 +166,28 @@ void Camera::request_complete(libcamera::Request *request)
 	{
 		libcamera::FrameBuffer *buffer = bufferPair.second;
     		const libcamera::FrameMetadata &metadata = buffer->metadata();
+		const libcamera::Span<const libcamera::FrameBuffer::Plane> &planes = buffer->planes();
+		if (!planes.empty())
+		{
+			m_latest_frame.plane = planes[0];
+            		m_latest_frame.width = m_width;
+            		m_latest_frame.height = m_height;
+            		m_latest_frame.stride = m_stride;
+            		m_latest_frame.sequence = buffer->metadata().sequence;
+            		m_latest_frame.valid = true;
+			m_rgb_frame  = plane_to_rgb_mat(m_latest_frame);
+			m_has_new_frame = true;
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(m_mtx);
-		 	const libcamera::Span<const libcamera::FrameBuffer::Plane> &planes = buffer->planes();
-			if (!planes.empty())
+        		if (m_frame_queue.size() >= m_max_queue_size) 
 			{
-				m_latest_frame.plane = planes[0];
-            			m_latest_frame.width = m_width;
-            			m_latest_frame.height = m_height;
-            			m_latest_frame.stride = m_stride;
-            			m_latest_frame.sequence = buffer->metadata().sequence;
-            			m_latest_frame.valid = true;
-				m_rgb_frame  = plane_to_rgb_mat(m_latest_frame);
-				m_has_new_frame = true;
-			}
+            			m_frame_queue.pop_front(); 
+        		}
+        		m_frame_queue.push_back(m_rgb_frame.clone());
 		}
+
 		m_plane_condition_variable.notify_one();
 
 		//std::cout << " seq: " << std::setw(6) << std::setfill('0') << metadata.sequence << " bytesused: ";
@@ -200,12 +208,15 @@ void Camera::request_complete(libcamera::Request *request)
 
 cv::Mat Camera::wait_and_get_latest_frame()
 {
-        std::unique_lock<std::mutex> lock(m_mtx);
-	m_plane_condition_variable.wait(lock,[this]{return m_has_new_frame||m_stopped;});
-        if (m_stopped)
-		return {};
-	m_has_new_frame = false;
-	return m_rgb_frame.clone();
+    std::unique_lock<std::mutex> lock(m_mtx);
+    m_plane_condition_variable.wait(lock, [this]{
+        return !m_frame_queue.empty() || m_stopped;
+    });
+    if (m_stopped) return {};
+    
+    cv::Mat frame = std::move(m_frame_queue.front());  
+    m_frame_queue.pop_front();
+    return frame;  
 }
 
 cv::Mat Camera::plane_to_rgb_mat(const FrameData& frame)

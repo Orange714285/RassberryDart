@@ -40,9 +40,11 @@ private:
 	int m_stride;
 	int m_exposure_time_us;
 	int m_frame_duration_us;
+	int m_max_queue_size;
 
 	libcamera::Rectangle m_center_crop;
-
+        bool get_crop();
+	
 	//线程相关
 	std::mutex m_mtx;
 	std::condition_variable m_plane_condition_variable;
@@ -51,8 +53,9 @@ private:
 	bool m_has_new_frame;
 	bool m_stopped;
 
-        bool get_crop();
-	
+    	
+	//帧队列
+	std::deque<cv::Mat> m_frame_queue;  	
 public:
 	FrameData m_latest_frame;
 	cv::Mat m_rgb_frame;

@@ -64,7 +64,8 @@ bool Recorder::write_frame(const cv::Mat& frame)
     {
 	std::cout<<"Frame type is not CV_8UC3!"<<std::endl;
         return false;
-    }	
+    }
+
     const size_t bytes = (size_t)frame.total() * frame.elemSize();
     size_t written = fwrite(frame.data, 1, bytes, m_fp);
     return written == bytes;
