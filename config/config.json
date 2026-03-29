@@ -6,7 +6,7 @@
 		"m_crop_height":960,       
 		"m_crop_x":0,              
 		"m_crop_y":0,               
-		"m_exposure_time_us":10000,
+		"m_exposure_time_us":100,
 		"m_frame_duration_us":16972,
 		"m_has_new_frame":false,
 		"m_stopped":false,

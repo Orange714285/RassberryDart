@@ -50,7 +50,7 @@ void Detector::detect_and_draw_lights(cv::Mat &frame)
     // cv::imshow("green gray",frame_process);//可删除    
 
     // 二值化
-    cv::threshold(frame_process,frame_process,0,255,cv::THRESH_BINARY | cv::THRESH_OTSU);
+    cv::threshold(frame_process,frame_process,this->m_max_val,255,cv::THRESH_BINARY);
     // cv::imshow("binary_roi",frame_process);//可删除
     
     // 查找轮廓
