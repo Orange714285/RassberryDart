@@ -48,7 +48,7 @@ int main()
         auto end = std::chrono::high_resolution_clock::now();
         auto get_frame_duration_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
-        //detector.detect_and_draw_lights(frame);
+        detector.detect_and_draw_lights(frame);
 	recorder.write_frame(frame);
         
 	}
