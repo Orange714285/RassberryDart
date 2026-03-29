@@ -1,68 +1,61 @@
-#pragma once
+#ifndef DETECTOR_HPP
+#define DETECTOR_HPP
 
-#include <atomic>
-#include <condition_variable> 
-#include <cmath>
-#include <chrono>
-#include <deque>
-
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <thread>
-#include <signal.h>
-
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
-#include "frame_data.hpp"
-#include "recorder.hpp"
-
-#include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
-#include <libcamera/libcamera.h>
-
+#include <chrono>
+#include <fstream>
+#include <vector>
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <utility>
+#include <Eigen/Dense>  // 包含 Eigen 库头文件  
+enum class State
+{
+    LOST,
+    DROP,
+    FOUND
+};
 class Detector
 {
 public:
-	Detector();
-	~Detector();
-	
-	std::ofstream m_outfile;
-	void detect_and_draw_lights(cv::Mat &frame);
-
-	int m_rmin = 0;
-   	int m_gmin = 160;
-    	int m_bmin = 0;
-    	int m_rmax = 140;
-    	int m_gmax = 255;
-    	int m_bmax = 140;
-
-	cv::Mat plane_to_rgb_mat(const FrameData& frame);
+    Detector();
+    ~Detector();
+    void detect_and_draw_lights(cv::Mat &frame);
+    bool is_contour_touch_border(const std::vector<cv::Point>& contour, 
+                          int img_width, 
+                          int img_height
+                          );
 private:
+    int m_max_val;
+    int m_kernel_close_size;
+    int m_kernel_open_size;
+    int m_roi_width;
+    int m_roi_height;
 
-	int m_index = 0;
+    std::ofstream m_outfile;
+    int m_index = 0;
+    size_t m_sum_dtMs = 0;
 
-	double contourCircularity(const std::vector<cv::Point>& contour);
-	
-    	class DetectResult
-   	{
-  	public:
-        	int index = 0;
-        	float pixel_x = 0;
-        	float pixel_y = 0;
-        	int8_t frame_dtMs = 0;
-   	};
+    double contourCircularity(const std::vector<cv::Point>& contour);
+    void set_roi(const cv::Size& frame_size, bool is_set_roi);
 
-    	DetectResult m_detect_result;
-    	std::chrono::steady_clock::time_point m_now{};
-    	std::chrono::steady_clock::time_point m_last{};
+    class DetectResult
+    {
+    public:
+        int index = 0;
+        float pixel_x = 0;
+        float pixel_y = 0;
+        int8_t frame_dtMs = 0;
+    };
+    DetectResult m_detect_result;
+    State m_state = State::LOST;
+    
+    cv::Rect m_roi_rect{0, 0, 0, 0};  // x, y, w, h
 
-	libcamera::FrameBuffer::Plane m_plane;
-	//std::unordered_map<int, MappedPlane> m_mapped_planes;
-	cv::Mat m_frame;
+    std::chrono::steady_clock::time_point m_now{};
+    std::chrono::steady_clock::time_point m_last{};
 };
+
+#endif // DETECTOR_HPP
+
