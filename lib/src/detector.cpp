@@ -79,7 +79,7 @@ void Detector::detect_and_draw_lights(cv::Mat &frame)
         }
     }
 
-    if(best_circularity > 0.60 )
+    if(best_circularity > 0.50 )
     {
         cv::Rect best_contour_bounding_rect = cv::boundingRect(contours[best_index]);
         cv::Rect best_contour_rect_on_frame(
