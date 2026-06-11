@@ -1,0 +1,13 @@
+{
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/toolchain.cmake"
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "Unix Makefiles",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.default.configurationName": "Raspberry Pi ARM64",
+    "C_Cpp.default.compilerPath": "/usr/bin/aarch64-linux-gnu-gcc",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-arm64",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.cStandard": "c17"
+}
