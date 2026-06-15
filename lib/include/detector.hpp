@@ -21,17 +21,21 @@ public:
     Detector();
     ~Detector();
 
-    void detect_and_draw_lights(cv::Mat &frame);
-    void set_hsv_params(int h_low, int h_high, int s_low, int s_high, int v_low, int v_high);
+    void detect_and_draw_lights(cv::Mat &bayer_frame);
+
+    const cv::Mat& diff_gray() const { return m_diff_gray; }
+    const cv::Mat& binary()    const { return m_binary; }
 
 private:
-    // ── HSV 阈值 (OpenCV: H=0..180, S/V=0..255) ──
-    int m_h_low  = config::HSV_H_LOW,   m_h_high = config::HSV_H_HIGH;
-    int m_s_low  = config::HSV_S_LOW,   m_s_high = config::HSV_S_HIGH;
-    int m_v_low  = config::HSV_V_LOW,   m_v_high = config::HSV_V_HIGH;
-    int m_roi_width                   = config::ROI_WIDTH;
-    int m_roi_height                  = config::ROI_HEIGHT;
+    // ── Bayer 差异阈值 ──
+    int    m_diff_threshold      = 200; // 绿色: diff_u8 > 200 (ratio ≈ 2.1)
+    int    m_roi_width           = config::ROI_WIDTH;
+    int    m_roi_height          = config::ROI_HEIGHT;
     double m_best_circularity_standard = config::BEST_CIRCULARITY_STANDARD;
+
+    // ── 输出图像 ──
+    cv::Mat m_diff_gray;  // 320x240 CV_8UC1, 差异灰度图
+    cv::Mat m_binary;     // 320x240 CV_8UC1, 二值化结果
 
     // ── 检测结果 ──
     class DetectResult
@@ -61,7 +65,6 @@ private:
     double contourCircularity(const std::vector<cv::Point>& contour);
     bool   is_contour_touch_border(const std::vector<cv::Point>& contour,
                                    int img_width, int img_height);
-    void   set_roi(const cv::Size& frame_size);
 };
 
 #endif // DETECTOR_HPP

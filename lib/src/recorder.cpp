@@ -15,7 +15,7 @@ bool Recorder::start(const std::string& output_path, int width, int height, int 
     std::ostringstream cmd;
     cmd
       << "ffmpeg -hide_banner -loglevel error -y "
-      << "-f rawvideo -pix_fmt bgr24 "
+      << "-f rawvideo -pix_fmt gray "
       << "-s " << m_width << "x" << m_height << " "
       << "-r " << m_fps << " "
       << "-i - "
@@ -61,9 +61,9 @@ bool Recorder::write_frame(const cv::Mat& frame)
         return false;
     }
 
-    if (frame.type() != CV_8UC3)
+    if (frame.type() != CV_8UC1)
     {
-	std::cout<<"Frame type is not CV_8UC3!"<<std::endl;
+	std::cout<<"Frame type is not CV_8UC1!"<<std::endl;
         return false;
     }	
 

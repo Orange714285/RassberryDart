@@ -69,10 +69,8 @@ private:
     // ── 状态 ──
     bool m_stopped = false;
 
-    // ── 帧缓冲（双缓冲，复用预分配内存避免每帧 new）──
+    // ── 帧缓冲（单槽覆盖，始终取最新帧，保证强实时性） ──
     cv::Mat   m_frame_slot;
-    cv::Mat   m_frame_buf[2];
-    int       m_write_idx = 0;
     bool      m_frame_ready = false;
     std::unordered_map<int, MappedPlane>       m_mapped_planes;
 

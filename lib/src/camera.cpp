@@ -121,8 +121,6 @@ bool Camera::start()
     {
         m_camera->queueRequest(request.get());
     }
-    m_frame_buf[0] = cv::Mat(m_height, m_width, CV_8UC3);
-    m_frame_buf[1] = cv::Mat(m_height, m_width, CV_8UC3);
     return true;
 }
 
@@ -242,14 +240,12 @@ void Camera::request_complete(libcamera::Request *request)
             m_latest_frame.sequence = buffer->metadata().sequence;
             m_latest_frame.valid = true;
             m_rgb_frame = plane_to_rgb_mat(m_latest_frame);
-            m_rgb_frame.copyTo(m_frame_buf[m_write_idx]);
 
             {
                 std::lock_guard<std::mutex> lock(m_mtx);
-                m_frame_slot = m_frame_buf[m_write_idx];
+                m_frame_slot = m_rgb_frame.clone();
                 m_frame_ready = true;
             }
-            m_write_idx ^= 1;
 
             m_plane_condition_variable.notify_one();
         }
