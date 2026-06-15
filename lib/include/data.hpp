@@ -14,4 +14,3 @@ struct FrameData
 
     FrameData():plane{libcamera::SharedFD(-1),0,0}{}
 };
-

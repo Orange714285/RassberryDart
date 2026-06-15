@@ -31,4 +31,3 @@ public:
     int m_fps = 0;
     bool write_frame(const cv::Mat& frame);
 };
-

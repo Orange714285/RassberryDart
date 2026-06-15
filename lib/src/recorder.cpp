@@ -23,7 +23,7 @@ bool Recorder::start(const std::string& output_path, int width, int height, int 
       << "-c:v h264_v4l2m2m "
       << "-b:v 4M "
       << "-pix_fmt yuv420p "
-      << "output.mp4";
+      << "output"+output_path+".mp4";
 
     m_fp = popen(cmd.str().c_str(), "w");
     if (!m_fp) {
@@ -60,14 +60,15 @@ bool Recorder::write_frame(const cv::Mat& frame)
 	std::cout<<"Frame size != setting size!"<<std::endl;	
         return false;
     }
+
     if (frame.type() != CV_8UC3)
     {
 	std::cout<<"Frame type is not CV_8UC3!"<<std::endl;
         return false;
-    }
+    }	
 
     const size_t bytes = (size_t)frame.total() * frame.elemSize();
     size_t written = fwrite(frame.data, 1, bytes, m_fp);
+
     return written == bytes;
 }
-
