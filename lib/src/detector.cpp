@@ -63,45 +63,59 @@ void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
         }
     }
 
-    // // 3. 二值化 → bayer_frame 现在是 640x480 二值图
-    // cv::threshold(bayer_frame, bayer_frame, m_diff_threshold, 255, cv::THRESH_BINARY);
+        set_roi(bayer_frame.size());
 
-    // // 4. 在 640x480 二值图上查找轮廓
-    // m_contours.clear();
-    // cv::findContours(bayer_frame, m_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        // 直接从 ROI 区域做单通道阈值二值化（应用实时阈值参数）
+        cv::Mat frame_roi = bayer_frame(m_roi_rect);
+        cv::Mat binary;
+        cv::threshold(frame_roi, binary, 120, 255, cv::THRESH_BINARY);
 
-    // double best_circularity = 0.0;
-    // int    best_index       = -1;
-    // for (size_t i = 0; i < m_contours.size(); i++)
-    // {
-    //     double cur_circularity = contourCircularity(m_contours[i]);
+        // 查找轮廓（复用 m_contours 成员避免每帧堆分配）
+        m_contours.clear();
+        cv::findContours(binary, m_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-    //     if (is_contour_touch_border(m_contours[i], w, h))
-    //         continue;
-    //     if (cur_circularity >= best_circularity)
-    //     {
-    //         best_index = static_cast<int>(i);
-    //         best_circularity = cur_circularity;
-    //     }
-    // }
 
-    // if (best_circularity > m_best_circularity_standard && best_index >= 0)
-    // {
-    //     cv::Rect best_bbox = cv::boundingRect(m_contours[best_index]);
-    //     m_detect_result.pixel_x = best_bbox.x + best_bbox.width  / 2.0f;
-    //     m_detect_result.pixel_y = best_bbox.y + best_bbox.height / 2.0f;
-    //     m_state = State::FOUND;
-    // }
-    // else
-    // {
-    //     m_detect_result.pixel_x = 0;
-    //     m_detect_result.pixel_y = 0;
-    //     m_state = State::LOST;
-    // }
+        double best_area  = 0.0;
+        int    best_index = -1;
 
-    // m_index++;
-    // m_detect_result.index = m_index;
-    // m_sum_dtMs += m_detect_result.frame_dtMs;
+        for (int i = 0; i < static_cast<int>(m_contours.size()); i++)
+        {
+            cv::Rect bbox = cv::boundingRect(m_contours[i]);
+
+            if (is_contour_touch_border(m_contours[i], binary.cols, binary.rows))
+                continue;
+
+            double area = cv::contourArea(m_contours[i]);
+            if (area >= best_area)
+            {
+                best_index = i;
+                best_area  = area;
+            }
+        }
+
+        if (best_index >= 0)
+        {
+            cv::Rect best_bbox = cv::boundingRect(m_contours[best_index]);
+            cv::Rect best_bbox_on_frame(
+                best_bbox.x + m_roi_rect.x, best_bbox.y + m_roi_rect.y,
+                best_bbox.width, best_bbox.height);
+            m_detect_result.pixel_x = best_bbox_on_frame.x + best_bbox_on_frame.width  / 2.0f;
+            m_detect_result.pixel_y = best_bbox_on_frame.y + best_bbox_on_frame.height / 2.0f;
+            cv::rectangle(bayer_frame, best_bbox_on_frame, cv::Scalar(255, 255, 0), 1);
+            m_state = State::FOUND;
+        }
+        else
+        {
+            m_detect_result.pixel_x = 0;
+            m_detect_result.pixel_y = 0;
+            m_state = State::LOST;
+        }
+
+        m_index++;
+        m_detect_result.index = m_index;
+
+        cv::rectangle(bayer_frame, m_roi_rect, cv::Scalar(255, 255, 255), 1);
+
 }
 
 double Detector::contourCircularity(const std::vector<cv::Point>& contour)
@@ -129,3 +143,32 @@ bool Detector::is_contour_touch_border(const std::vector<cv::Point>& contour,
 
     return touch_left || touch_right || touch_top || touch_bottom;
 }
+
+    void Detector::set_roi(const cv::Size& frame_size)
+    {
+        if (frame_size.width <= 0 || frame_size.height <= 0)
+        {
+            m_roi_rect = cv::Rect();
+            return;
+        }
+
+        const cv::Rect frame_rect(0, 0, frame_size.width, frame_size.height);
+
+        if (m_state == State::LOST)
+        {
+            m_roi_rect = frame_rect;
+        }
+        else if (m_state == State::FOUND)
+        {
+            const int roi_x = static_cast<int>(std::round(m_detect_result.pixel_x - m_roi_width  / 2.0));
+            const int roi_y = static_cast<int>(std::round(m_detect_result.pixel_y - m_roi_height / 2.0));
+            m_roi_rect = cv::Rect(roi_x, roi_y, m_roi_width, m_roi_height) & frame_rect;
+
+            if (m_roi_rect.width <= 0 || m_roi_rect.height <= 0)
+                m_roi_rect = frame_rect;
+        }
+        else
+        {
+            m_roi_rect = frame_rect;
+        }
+    }

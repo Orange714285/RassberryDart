@@ -50,7 +50,6 @@ private:
     State m_state = State::LOST;
 
     cv::Rect m_roi_rect{0, 0, 0, 0};
-
     // ── 时间统计 ──
     std::chrono::steady_clock::time_point m_now{};
     std::chrono::steady_clock::time_point m_last{};
@@ -65,6 +64,8 @@ private:
     double contourCircularity(const std::vector<cv::Point>& contour);
     bool   is_contour_touch_border(const std::vector<cv::Point>& contour,
                                    int img_width, int img_height);
+    void set_roi(const cv::Size& frame_size);
+
 };
 
 #endif // DETECTOR_HPP

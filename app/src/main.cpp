@@ -21,8 +21,8 @@ static void onSigInt(int /*signal*/)
 
 int main()
 {
-    ImageStreamer image_streamer;
-    Recorder recorder;
+    // ImageStreamer image_streamer;
+    // Recorder recorder;
     std::cout << "3425" <<std::endl;
     signal(SIGINT, onSigInt);
     Camera ov5647;
@@ -32,20 +32,20 @@ int main()
         ov5647.stop();
         return -1;
     }
-    recorder.start("output",640,480,120);
+    // recorder.start("output",640,480,120);
     while (g_running.load())
     {
-        cv::Mat frame = ov5647.wait_and_get_latest_frame();
         if (!g_running.load())
             break;
+        cv::Mat frame = ov5647.wait_and_get_latest_frame();
         if (frame.empty())
         {
             std::cout << "Frame empty!" << std::endl;
             break;
         }
         detector.detect_and_draw_lights(frame);
-        image_streamer.send(frame);
-        recorder.write_frame(frame);
+        // image_streamer.send(frame);
+        // recorder.write_frame(frame);
         FrameCounter::tick();                
         if (FrameCounter::total() % 60 == 0)
         {
@@ -58,6 +58,6 @@ int main()
         }
     }
     ov5647.stop();
-    recorder.stop();
+    // recorder.stop();
     return 0;
 }
