@@ -20,8 +20,8 @@ Detector::~Detector()
 void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
 {
     m_now = std::chrono::steady_clock::now();
-    m_detect_result.frame_dtMs = static_cast<uint16_t>(
-    std::chrono::duration_cast<std::chrono::milliseconds>(m_now - m_last).count());
+    m_vision_data.m_frame_dt_ms = static_cast<int>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(m_now - m_last).count());
     m_last = m_now;
 
     int h = bayer_frame.rows;
@@ -36,8 +36,8 @@ void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
     const int roi_w  = m_roi_rect.width;
     const int roi_h  = m_roi_rect.height;
 
-    const int margin   = 3;
-    const int min_area = 10;
+    const int margin   = 2;
+    const int min_area = 4;
 
     int  min_x = roi_w, min_y = roi_h, max_x = 0, max_y = 0;
     long area  = 0;
@@ -60,7 +60,7 @@ void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
             int rb_sum = r + b + 1;
             int ratio  = (g_sum << 8) / (rb_sum * 2);
             int diff   = ratio - 128;
-            uint8_t val = (diff > 120) ? 255 : 0;
+            uint8_t val = (diff > m_diff_threshold) ? 255 : 0;
 
             dst0[col]     = 0;
             dst0[col + 1] = val;
@@ -113,51 +113,52 @@ void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
             best_bbox.x + roi_x0, best_bbox.y + roi_y0,
             best_bbox.width, best_bbox.height);
 
-        m_detect_result.pixel_x = static_cast<float>(sum_x) / area + roi_x0;
-        m_detect_result.pixel_y = static_cast<float>(sum_y) / area + roi_y0;
+        m_vision_data.m_target_pixel_x = static_cast<int>(sum_x / area) + roi_x0;
+        m_vision_data.m_target_pixel_y = static_cast<int>(sum_y / area) + roi_y0;
+        m_vision_data.m_target_status = 1;
 
         cv::rectangle(bayer_frame, best_bbox_on_frame, cv::Scalar(255, 255, 0), 1);
         m_state = State::FOUND;
     }
     else
     {
-        m_detect_result.pixel_x = 0;
-        m_detect_result.pixel_y = 0;
+        m_vision_data.m_target_pixel_x = 0;
+        m_vision_data.m_target_pixel_y = 0;
+        m_vision_data.m_target_status = 0;
         m_state = State::LOST;
-        // std::cout << "target lost"<<std::endl;
+        std::cout << "[INFO] Target lost! " << std::endl;
     }
 
     m_index++;
-    m_detect_result.index = m_index;
 
     cv::rectangle(bayer_frame, m_roi_rect, cv::Scalar(255, 255, 255), 1);
 }
 
-    void Detector::set_roi(const cv::Size& frame_size)
+void Detector::set_roi(const cv::Size& frame_size)
+{
+    if (frame_size.width <= 0 || frame_size.height <= 0)
     {
-        if (frame_size.width <= 0 || frame_size.height <= 0)
-        {
-            m_roi_rect = cv::Rect();
-            return;
-        }
-
-        const cv::Rect frame_rect(0, 0, frame_size.width, frame_size.height);
-
-        if (m_state == State::LOST)
-        {
-            m_roi_rect = frame_rect;
-        }
-        else if (m_state == State::FOUND)
-        {
-            const int roi_x = static_cast<int>(std::round(m_detect_result.pixel_x - m_roi_width  / 2.0));
-            const int roi_y = static_cast<int>(std::round(m_detect_result.pixel_y - m_roi_height / 2.0));
-            m_roi_rect = cv::Rect(roi_x, roi_y, m_roi_width, m_roi_height) & frame_rect;
-
-            if (m_roi_rect.width <= 0 || m_roi_rect.height <= 0)
-                m_roi_rect = frame_rect;
-        }
-        else
-        {
-            m_roi_rect = frame_rect;
-        }
+        m_roi_rect = cv::Rect();
+        return;
     }
+
+    const cv::Rect frame_rect(0, 0, frame_size.width, frame_size.height);
+
+    if (m_state == State::LOST)
+    {
+        m_roi_rect = frame_rect;
+    }
+    else if (m_state == State::FOUND)
+    {
+        const int roi_x = static_cast<int>(std::round(m_vision_data.m_target_pixel_x - m_roi_width  / 2.0));
+        const int roi_y = static_cast<int>(std::round(m_vision_data.m_target_pixel_y - m_roi_height / 2.0));
+        m_roi_rect = cv::Rect(roi_x, roi_y, m_roi_width, m_roi_height) & frame_rect;
+
+        if (m_roi_rect.width <= 0 || m_roi_rect.height <= 0)
+            m_roi_rect = frame_rect;
+    }
+    else
+    {
+        m_roi_rect = frame_rect;
+    }
+}

@@ -15,6 +15,7 @@ inline constexpr int   CAM_FPS               = 300;
 inline constexpr int   CAM_COLOUR_TEMP       = 6100;
 
 // 检测参数 (Bayer 差异阈值 / ROI / 圆形度)
+inline constexpr int    DIFF_THRESHOLD               = 120;  // diff > this → 判定为绿光
 inline constexpr int    ROI_WIDTH                     = 200;
 inline constexpr int    ROI_HEIGHT                    = 200;
 inline constexpr double BEST_CIRCULARITY_STANDARD     = 0.60;

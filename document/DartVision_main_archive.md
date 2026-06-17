@@ -22,29 +22,35 @@ static void onSigInt(int /*signal*/)
 int main()
 {
     signal(SIGINT, onSigInt);
-    Camera IMX219;
-    // ImageStreamer image_streamer;
-    Detector detector;
-    if (!IMX219.start())
+
+    Camera    ov5647;
+    // Recorder  recorder;
+    // Detector  detector;
+    // ImageStreamer streamer;
+
+    if (!ov5647.start())
     {
-        IMX219.stop();
+        ov5647.stop();
         return -1;
     }
-    // recorder.start("output",640,480,120);
+
+    // if (!recorder.start("output.mp4", ov5647.width(), ov5647.height(), ov5647.fps()))
+    // {
+    //     ov5647.stop();
+    //     std::cout << "[ERROR]recorder start failed!" << std::endl;
+    //     return -1;
+    // }
+
     while (g_running.load())
     {
+        cv::Mat frame = ov5647.wait_and_get_latest_frame();
         if (!g_running.load())
             break;
-        cv::Mat frame = IMX219.wait_and_get_latest_frame();
         if (frame.empty())
         {
             std::cout << "Frame empty!" << std::endl;
             break;
         }
-        detector.detect_and_draw_lights(frame);
-        // image_streamer.send(frame);
-
-        // recorder.write_frame(frame);
         FrameCounter::tick();                
         if (FrameCounter::total() % 60 == 0)
         {
@@ -55,8 +61,12 @@ int main()
             FrameCounter::log_to_csv("fps.csv");
             CpuMonitor::log_to_csv("cpu.csv");
         }
+
+        // streamer.send(frame);
+        // recorder.write_frame(frame);
+        // detector.detect_and_draw_lights(frame);
     }
-    IMX219.stop();
     // recorder.stop();
+    ov5647.stop();
     return 0;
 }

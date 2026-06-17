@@ -6,6 +6,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 
+#include <data_type.hpp>
 #include <config.hpp>
 
 enum class State
@@ -21,38 +22,30 @@ public:
     ~Detector();
 
     void detect_and_draw_lights(cv::Mat &bayer_frame);
+    const VisionData& vision_data() const { return m_vision_data; }
 
-    private:
+private:
+    // ── 检测结果 ──
+    VisionData m_vision_data;
+
     // ── Bayer 差异阈值 ──
-    int    m_diff_threshold      = 200; // 绿色: diff_u8 > 200 (ratio ≈ 2.1)
+    int    m_diff_threshold      = config::DIFF_THRESHOLD;
     int    m_roi_width           = config::ROI_WIDTH;
     int    m_roi_height          = config::ROI_HEIGHT;
     double m_best_circularity_standard = config::BEST_CIRCULARITY_STANDARD;
 
-
-    // ── 检测结果 ──
-    class DetectResult
-    {
-    public:
-        int     index      = 0;
-        float   pixel_x    = 0;
-        float   pixel_y    = 0;
-        uint16_t frame_dtMs = 0;
-    };
-    DetectResult m_detect_result;
     State m_state = State::LOST;
 
     cv::Rect m_roi_rect{0, 0, 0, 0};
+
     // ── 时间统计 ──
     std::chrono::steady_clock::time_point m_now{};
     std::chrono::steady_clock::time_point m_last{};
 
-    int     m_index    = 0;
-    size_t  m_sum_dtMs = 0;
+    int    m_index    = 0;
 
     // ── 辅助函数 ──
     void set_roi(const cv::Size& frame_size);
-
 };
 
 #endif // DETECTOR_HPP

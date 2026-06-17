@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <data.hpp>
+#include <data_type.hpp>
 #include <config.hpp>
 #include <opencv2/opencv.hpp>
 #include <libcamera/libcamera.h>

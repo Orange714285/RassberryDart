@@ -1,0 +1,29 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "aarch64-debug",
+      "displayName": "AArch64 Debug",
+      "description": "交叉编译到 aarch64 (树莓派), Debug 模式",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchain.cmake"
+      }
+    },
+    {
+      "name": "aarch64-release",
+      "displayName": "AArch64 Release",
+      "description": "交叉编译到 aarch64 (树莓派), Release 模式",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/toolchain.cmake"
+      }
+    }
+  ]
+}

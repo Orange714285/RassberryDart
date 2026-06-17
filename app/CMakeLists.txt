@@ -23,7 +23,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OPENCV_LIBRARIES}
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE
-    ${LIBCAMERA_CFLAGS_OTHER}
-    ${OPENCV_CFLAGS_OTHER}
-)
+

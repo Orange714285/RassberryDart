@@ -89,7 +89,9 @@ bool Camera::start()
             return false;
         }
 
+        request->controls().set(libcamera::controls::AwbEnable, false);
         request->controls().set(libcamera::controls::AeEnable, false);
+        request->controls().set(libcamera::controls::ColourTemperature, m_colour_temperature);
         request->controls().set(libcamera::controls::ExposureTime, m_exposure_time_us);
         request->controls().set(libcamera::controls::Brightness, m_brightness);
         int64_t fd_us = 1'000'000 / m_fps;
