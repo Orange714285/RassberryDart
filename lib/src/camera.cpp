@@ -153,6 +153,7 @@ bool Camera::get_crop()
         y = crop_max.y + int(crop_max.height) - h;
 
     m_center_crop = libcamera::Rectangle(x, y, w, h);
+    m_crop_enabled = true;
 
     std::cout << "[INFO] ScalerCropMaximum: "
               << crop_max.x << "," << crop_max.y << " "
@@ -254,6 +255,10 @@ void Camera::request_complete(libcamera::Request *request)
     }
 
     request->reuse(libcamera::Request::ReuseBuffers);
+    if (m_crop_enabled)
+    {
+        request->controls().set(libcamera::controls::ScalerCrop, m_center_crop);
+    }
     m_camera->queueRequest(request);
     m_index++;
 }

@@ -58,6 +58,7 @@ private:
     int   m_fps                 = config::CAM_FPS;
     int   m_colour_temperature  = config::CAM_COLOUR_TEMP;
     libcamera::Rectangle m_center_crop;
+    bool m_crop_enabled = false;
 
     bool get_crop();
 

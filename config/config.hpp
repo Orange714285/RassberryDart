@@ -11,7 +11,7 @@ inline constexpr int   CAM_CROP_X            = 1320;
 inline constexpr int   CAM_CROP_Y            = 752;
 inline constexpr int   CAM_EXPOSURE_TIME_US  = 500;
 inline constexpr float CAM_BRIGHTNESS        = 0.0f;
-inline constexpr int   CAM_FPS               = 300;
+inline constexpr int   CAM_FPS               = 200;
 inline constexpr int   CAM_COLOUR_TEMP       = 6100;
 
 // 检测参数 (Bayer 差异阈值 / ROI / 圆形度)
