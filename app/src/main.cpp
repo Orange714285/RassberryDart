@@ -45,6 +45,7 @@ int main()
         }
         detector.detect_and_draw_lights(frame);
         // image_streamer.send(frame);
+
         // recorder.write_frame(frame);
         FrameCounter::tick();                
         if (FrameCounter::total() % 60 == 0)
