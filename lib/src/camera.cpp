@@ -52,9 +52,10 @@ bool Camera::start()
     stream_configuration.size.width = m_width;
     stream_configuration.size.height = m_height;
     stream_configuration.pixelFormat = libcamera::formats::SRGGB8;
+    stream_configuration.bufferCount = 4;
+    camera_configuration->validate();
     m_stride = stream_configuration.stride;
 
-    camera_configuration->validate();
     std::cout << "Validated viewfinder configuration is: "  
               << stream_configuration.toString() << std::endl;
 

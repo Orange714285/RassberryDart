@@ -126,7 +126,6 @@ void Detector::detect_and_draw_lights(cv::Mat &bayer_frame)
         m_vision_data.m_target_pixel_y = 0;
         m_vision_data.m_target_status = 0;
         m_state = State::LOST;
-        std::cout << "[INFO] Target lost! " << std::endl;
     }
 
     m_index++;
